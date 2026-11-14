@@ -1,0 +1,41 @@
+name: Fork QA unused combat-style copy save
+on:
+  push:
+    branches: [qa/csty-unused-save-20261114]
+permissions:
+  contents: read
+env:
+  CARGO_TERM_COLOR: never
+  CARGO_PROFILE_RELEASE_DEBUG: "0"
+  CARGO_BUILD_JOBS: "2"
+jobs:
+  unused-copy-save:
+    if: github.repository == 'jojokengly/NVForever' && github.ref == 'refs/heads/qa/csty-unused-save-20261114'
+    runs-on: ubuntu-latest
+    timeout-minutes: 135
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec
+        with:
+          toolchain: stable
+      - name: Free unused hosted runner SDK space (upstream engine CI recipe)
+        run: sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /usr/local/.ghcup /opt/hostedtoolcache/CodeQL
+      - name: Upstream engine system libraries
+        run: sudo apt-get update && sudo apt-get install -y libasound2-dev libudev-dev libwayland-dev libxkbcommon-dev
+      - name: Actual main805, refusal1ff and fixed35f same unused-copy case
+        run: python3 tools/qa-csty-unused-save/run.py --output "$RUNNER_TEMP/csty-unused-save-proof" --execute
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: csty-unused-copy-source-and-raw-proof
+          path: |
+            ${{ runner.temp }}/csty-unused-save-proof/RUN.json
+            ${{ runner.temp }}/csty-unused-save-proof/IDENTICAL-FIXTURE-MODULE.rs
+            ${{ runner.temp }}/csty-unused-save-proof/main
+            ${{ runner.temp }}/csty-unused-save-proof/refusal
+            ${{ runner.temp }}/csty-unused-save-proof/fixed
+          if-no-files-found: error
+          retention-days: 30
