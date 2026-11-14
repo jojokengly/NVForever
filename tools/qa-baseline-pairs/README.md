@@ -15,6 +15,15 @@ exported or held locally. Full compile/list/named-case stdout/stderr, counts,
 source/working hashes, commit/tree identities and patches are artifacts. Large
 source checkouts and build targets are excluded from artifact uploads.
 
+Both phases use the same absolute `output/source` checkout, preserving patched
+dependency paths in Cargo's build identity. After the baseline post-execution
+hash check, only its exact known fixture inputs are restored to their captured
+original bytes (or the exact newly authored fixture is removed). Full raw hashes
+and clean Git status must match before switching that checkout to the candidate.
+Unknown changes stop the pair; there is no `git clean` or broad reset. Setup or
+compile failure stops before candidate execution. Each Linux command has its own
+process group; timeout kills that group and aborts the pair, without source switch.
+
 ## CND five actual producer fixtures
 
 Baseline: exact public main `a605879db4d8a2d2998549c6788f3d190f1b5a56` production.
