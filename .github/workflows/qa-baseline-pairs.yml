@@ -1,0 +1,63 @@
+name: Fork QA baseline pairs
+on:
+  push:
+    branches: [qa/cnd-null-baseline-20261114]
+permissions:
+  contents: read
+env:
+  CARGO_TERM_COLOR: never
+  CARGO_PROFILE_RELEASE_DEBUG: "0"
+  CARGO_BUILD_JOBS: "2"
+jobs:
+  cnd-engine:
+    if: github.repository == 'jojokengly/NVForever' && github.ref == 'refs/heads/qa/cnd-null-baseline-20261114'
+    runs-on: ubuntu-latest
+    timeout-minutes: 100
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec
+        with:
+          toolchain: stable
+      - name: Free unused hosted runner SDK space (upstream engine CI recipe)
+        run: sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /usr/local/.ghcup /opt/hostedtoolcache/CodeQL
+      - name: Upstream engine system libraries
+        run: sudo apt-get update && sudo apt-get install -y libasound2-dev libudev-dev libwayland-dev libxkbcommon-dev
+      - name: Actual a605 and 51ede producer pair
+        run: python3 tools/qa-baseline-pairs/run.py cnd --output "$RUNNER_TEMP/cnd-proof" --execute
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: cnd-source-and-raw-proof
+          path: |
+            ${{ runner.temp }}/cnd-proof/RUN.json
+            ${{ runner.temp }}/cnd-proof/base
+            ${{ runner.temp }}/cnd-proof/candidate
+          if-no-files-found: error
+          retention-days: 30
+  null-core:
+    if: github.repository == 'jojokengly/NVForever' && github.ref == 'refs/heads/qa/cnd-null-baseline-20261114'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec
+        with:
+          toolchain: stable
+      - name: Actual pre-fix df80 and public 05b same-three pair
+        run: python3 tools/qa-baseline-pairs/run.py null --output "$RUNNER_TEMP/null-proof" --execute
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: null-source-and-raw-proof
+          path: |
+            ${{ runner.temp }}/null-proof/RUN.json
+            ${{ runner.temp }}/null-proof/base
+            ${{ runner.temp }}/null-proof/candidate
+          if-no-files-found: error
+          retention-days: 30
