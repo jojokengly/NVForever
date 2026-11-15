@@ -1,0 +1,99 @@
+{
+  "schema": "attach2690-fork-public-same-fixture-pair/v1",
+  "fork": "jojokengly/NVForever",
+  "qaBranch": "qa/attach2690-public-pair-20261115",
+  "baseline": "428305cba82d592a8566c31e95a2ecab3876ca00",
+  "baselineTree": "762b9d4339dd6ea29969211ff27fb35ea46b4614",
+  "candidate": "74b4e3f2b9b327f9147c366d790df4b3562095f1",
+  "candidateTree": "8ab3baafcea26ad7c3e8a2f01866904b7006e914",
+  "signedSourceRequestSHA256": "a054dca7bdff8699518597dcd2aa40c71bb2c43d6af5ae486502dc3d90130915",
+  "candidateFive": {
+    "crates/fnv-game/src/nif_blocks.rs": {
+      "mode": "100644",
+      "blob": "fd365f13acc3fbd1f05e69ce6364d5976e7a9dde"
+    },
+    "docs/spec-notes/nif-attachments.md": {
+      "mode": "100644",
+      "blob": "ccf2ea8af0d3c7769af1ae5ba1a23cfde4024169"
+    },
+    "engine/nvforever/src/nif_attachments.rs": {
+      "mode": "100644",
+      "blob": "6a8ebd1ec5c6af5b0b92f096c615d8d26c8f88fb"
+    },
+    "engine/nvforever/src/nif_attachments/tests.rs": {
+      "mode": "100644",
+      "blob": "59951aa6e2ce0c8d50784cd19baa3778402b2364"
+    },
+    "tools/smoke/fixtures/attach-model-owned/make_nif.py": {
+      "mode": "100644",
+      "blob": "18984f95d9f110861c72662a5f2892a41fd7c0cd"
+    }
+  },
+  "fixturePath": "engine/nvforever/src/nif_attachments/tests.rs",
+  "fixtureSHA256": "5ca7a3937a585d08984389064dbc1098ab4b134dcb71c0d2d4690c1e9061da63",
+  "baselineNames": [
+    "nif_mirror::attachment_tests::attach_form_model_keeps_its_legacy_edit_without_a_reference_side_request",
+    "nif_mirror::attachment_tests::attach_form_model_does_not_enroll_the_reference_producer",
+    "nif_mirror::attachment_tests::cleanup_tolerates_a_foreign_child_despawned_before_its_detach_applies"
+  ],
+  "candidateNames": [
+    "nif_mirror::attachment_tests::compiled_attach_draws_distinct_duplicate_shapes_and_publishes_actual_identities",
+    "nif_mirror::attachment_tests::unnamed_and_multiple_roots_keep_every_drawable_and_detach_every_owned_root",
+    "nif_mirror::attachment_tests::cold_parent_waits_but_missing_file_never_publishes_a_fake_graph",
+    "nif_mirror::attachment_tests::mode_two_uses_instance_ownership_after_rename_and_preserves_foreign_children",
+    "nif_mirror::attachment_tests::synchronous_parent_retirement_expires_nodes_and_holds_without_namesake_rebinding",
+    "nif_mirror::attachment_tests::replacement_replays_structure_but_stale_capture_cannot_create_in_replacement",
+    "nif_mirror::attachment_tests::deferred_add_and_remove_have_separate_existing_and_future_model_behavior",
+    "nif_mirror::attachment_tests::cached_source_graph_stays_coherent_after_file_rewrite_and_invalid_mapping_is_atomic",
+    "nif_mirror::attachment_tests::cold_reference_first_birth_and_session_replacement_do_not_reuse_old_owners",
+    "nif_mirror::attachment_tests::parent_namesake_and_missing_graph_retry_do_not_steal_an_old_registration",
+    "nif_mirror::attachment_tests::indexed_rig_spawn_preserves_group_rig_and_unrelated_prepared_materials",
+    "nif_mirror::attachment_tests::invalid_model_specs_do_not_spawn_or_change_a_valid_neighbor",
+    "nif_mirror::attachment_tests::default_player_attachment_uses_third_rig_without_first_person_fallback",
+    "nif_mirror::attachment_tests::prebirth_transforms_use_the_real_producer_and_expire_after_exact_detach",
+    "nif_mirror::attachment_tests::ancestry_bound_refuses_before_spawn_and_accepts_its_last_supported_parent",
+    "nif_mirror::attachment_tests::parent_rename_and_late_insert_keep_the_actual_parent_recipient",
+    "nif_mirror::attachment_tests::nested_owned_instances_retire_together_without_a_transient_orphan",
+    "nif_mirror::attachment_tests::legacy_edit_drains_retire_the_side_queue_without_disabling_fresh_production",
+    "nif_mirror::attachment_tests::unavailable_assets_wait_without_losing_the_captured_parent_lifetime",
+    "nif_mirror::attachment_tests::unavailable_assets_do_not_skip_detach_lifetime_session_or_runtime_cleanup",
+    "nif_mirror::attachment_tests::attach_form_model_keeps_its_legacy_edit_without_a_reference_side_request",
+    "nif_mirror::attachment_tests::attach_form_model_does_not_enroll_the_reference_producer",
+    "nif_mirror::attachment_tests::cleanup_tolerates_a_foreign_child_despawned_before_its_detach_applies"
+  ],
+  "inputSHA256": {
+    "run.py": "edf0e93b6c5184b261577e2674dc16609dfcfa3fde2f2ea2427f3bac60ff7a08",
+    "BASELINE-FIXTURE-ONLY.patch": "33195b71f95245975df48243b226ee5b69ac6290ad6f06ad01ac3fa575b089a7"
+  },
+  "totalSeconds": 6600,
+  "compileSeconds": 2400,
+  "caseSeconds": 60,
+  "executionAuthorizedByThisPreparation": false,
+  "classification": "baseline2specificFAIL+deferredCompatibilityPASS prediction; candidate23PASS requirement; all UNRUN",
+  "baselineThirdPanicPredictionWithdrawn": true,
+  "nativeGameGPUAcceptance": false,
+  "baselineParents": [
+    "7058998a23dd1c4f6ed002782ceb6c802267d85e",
+    "1790ab94a5ae8a8a4ef56b84e3454c3363d78866"
+  ],
+  "baselineBranch": "qa/attach2690-baseline-main1790-20261115",
+  "candidateParents": [
+    "a2e175e543031d748ff1bf804d7b04f25689e00d"
+  ],
+  "candidateMerge": "a2e175e543031d748ff1bf804d7b04f25689e00d",
+  "candidateMergeTree": "c16e8595dae1725cb2bf1af8e3d9f691f27cb5c7",
+  "candidateMergeParents": [
+    "9f3f160c58430a49c7aec0154c6051e0bb86902a",
+    "1790ab94a5ae8a8a4ef56b84e3454c3363d78866"
+  ],
+  "currentMain": "1790ab94a5ae8a8a4ef56b84e3454c3363d78866",
+  "priorPublicHead": "7058998a23dd1c4f6ed002782ceb6c802267d85e",
+  "priorCorrection": "9f3f160c58430a49c7aec0154c6051e0bb86902a",
+  "baselineRawMapSHA256": "cb7d3c542509292f936fb975fe9a5e83b4f743a03ac17d740f2f101cf81e749b",
+  "baselineWithFixtureMapSHA256": "7dad1cbef8efdcf3f7e217fa78150e21f30fdef213c49df74feb9ed69d0f240e",
+  "candidateMapSHA256": "1c235613393079cae2dbad94dd9fc315256503ce47feb15e16ea824a2203e6f7",
+  "candidateMergeFixtureSHA256": "0b099327502c5b32d50658c4c05d3bc0ac50d09223a1e04d86d1c7099a3c2c53",
+  "sourceContext": "Both sides currentMain1790 compositions; not old705-only graph or pristineMain. Same complete23fixture includes originalAstra billboard:None API closure.",
+  "oldWhole50110PrefixExact": false,
+  "all23AssertionBodiesRetained": true
+}

@@ -1,0 +1,237 @@
+diff --git a/engine/nvforever/src/nif_attachments/tests.rs b/engine/nvforever/src/nif_attachments/tests.rs
+index 9373ae2f47..59951aa6e2 100644
+--- a/engine/nvforever/src/nif_attachments/tests.rs
++++ b/engine/nvforever/src/nif_attachments/tests.rs
+@@ -957,6 +957,7 @@ fn indexed_rig_spawn_preserves_group_rig_and_unrelated_prepared_materials() {
+             parent: o.parent,
+             local: o.local,
+             hidden: false,
++            billboard: None,
+         })
+         .collect();
+     let shapes = authored
+@@ -1497,3 +1498,224 @@ fn unavailable_assets_do_not_skip_detach_lifetime_session_or_runtime_cleanup() {
+         assert!(members(&mut app).is_empty(), "asset restoration alone cannot recreate a retired instance: {reason}");
+     }
+ }
++
++
++// This additional source differs only by an authored STAT MODL. Keep the original
++// twenty controls and their fixture unchanged; the form call resolves a real record.
++fn source_with_form_model() -> Source {
++    use common::*;
++    let references = [
++        record(
++            b"REFR",
++            0,
++            REFERENCE.0,
++            &[
++                sub(b"EDID", z("OwnedReference")),
++                sub(b"NAME", u32s(&[0x301])),
++                sub(b"DATA", vec![0; 24]),
++            ],
++        ),
++        record(
++            b"REFR",
++            0,
++            OTHER.0,
++            &[
++                sub(b"EDID", z("OwnedOtherReference")),
++                sub(b"NAME", u32s(&[0x301])),
++                sub(b"DATA", vec![0; 24]),
++            ],
++        ),
++    ]
++    .concat();
++    let cell = [
++        record(
++            b"CELL",
++            0,
++            0x900,
++            &[sub(b"EDID", z("OwnedCell")), sub(b"DATA", vec![1])],
++        ),
++        group(
++            0x900u32.to_le_bytes(),
++            6,
++            &group(0x900u32.to_le_bytes(), 9, &references),
++        ),
++    ]
++    .concat();
++    let bytes = [
++        tes4(),
++        top(
++            b"STAT",
++            &record(
++                b"STAT",
++                0,
++                0x301,
++                &[
++                    sub(b"EDID", z("OwnedBase")),
++                    sub(b"MODL", z("owned/duplicate.nif")),
++                ],
++            ),
++        ),
++        top(
++            b"CELL",
++            &group(0i32.to_le_bytes(), 2, &group(0i32.to_le_bytes(), 3, &cell)),
++        ),
++    ]
++    .concat();
++    let plugins = [fnv_esm::Plugin::parse(&bytes, "OwnedAttachment.esm".into()).unwrap()];
++    let lo = fnv_esm::LoadOrder::new(&plugins).unwrap();
++    let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../schemas");
++    let schema = fnv_esm::Schema::load_dir(root.join("fnv")).unwrap();
++    let catalogue = root.join("script/functions.json");
++    let forms = FormStore::build(&lo, &schema);
++    let refs = RefTable::build(&lo, &schema);
++    let raw = serde_json::from_slice(&std::fs::read(&catalogue).unwrap()).unwrap();
++    let data = fnv_game::GameData::build(
++        &lo,
++        &schema,
++        FunctionTable::load(&catalogue).unwrap(),
++        &raw,
++        &refs,
++    );
++    Source { data, forms, refs }
++}
++
++
++fn form_model_fixture() -> (App, Files, Entity, Entity) {
++    let (mut app, files, root, socket) = fixture(false);
++    let source = Box::leak(Box::new(source_with_form_model()));
++    app.insert_resource(TestGame(Game::new(
++        &source.data,
++        fnv_sim::World::new(&source.forms, &source.refs, Default::default()),
++        GameConfig { strict: true, ..default() },
++    )));
++    query(&mut app, "OwnedReference.GetChildBlocks \"\"");
++    query(&mut app, "OwnedOtherReference.GetChildBlocks \"\"");
++    app.update();
++    assert_eq!(prepare(&mut app, "duplicate.nif").shapes.len(), 2);
++    assert_eq!(scene(&mut app, "Socket").name, "Socket");
++    (app, files, root, socket)
++}
++
++#[test]
++fn attach_form_model_keeps_its_legacy_edit_without_a_reference_side_request() {
++    let (mut app, _files, _, _) = form_model_fixture();
++    assert_eq!(
++        query(&mut app, "AttachFormModel OwnedReference OwnedBase 3 \"Socket\""),
++        XVal::Num(1.0),
++    );
++    // Inspect immediately: take_edits/take_targeted_edits would clear the side
++    // queue and hide the defect. No producer/update or legacy drain precedes this.
++    {
++        let mut game = app.world_mut().resource_mut::<TestGame>();
++        assert!(game.0.scene.take_attachment_changes().is_empty());
++        assert!(matches!(
++            game.0.scene.take_edits().as_slice(),
++            [SceneEdit::Attach { r, target, model }]
++                if *r == REFERENCE && target == "Socket" && model == "owned/duplicate.nif"
++        ));
++    }
++    assert_eq!(
++        query(&mut app, "HasRuntimeNode OwnedReference \"Socket|owned/duplicate.nif\" 2"),
++        XVal::Num(1.0),
++    );
++}
++
++#[test]
++fn attach_form_model_does_not_enroll_the_reference_producer() {
++    let (mut app, _files, root, socket) = form_model_fixture();
++
++    // A real positive proves the same app, recipient and model can produce meshes.
++    attach(&mut app, "OwnedOtherReference", 3, "Socket", "duplicate.nif");
++    app.update();
++    assert_eq!(meshes(&mut app).len(), 2);
++    attach(&mut app, "OwnedOtherReference", 2, "Socket", "duplicate.nif");
++    app.update();
++    assert!(meshes(&mut app).is_empty());
++
++    for remove_mode in [2, 0] {
++        assert_eq!(
++            query(&mut app, "AttachFormModel OwnedReference OwnedBase 3 \"Socket\""),
++            XVal::Num(1.0),
++        );
++        assert_eq!(
++            query(&mut app, "HasRuntimeNode OwnedReference \"Socket|owned/duplicate.nif\" 2"),
++            XVal::Num(1.0),
++        );
++        app.update();
++        assert_eq!(
++            query(&mut app, &format!("AttachFormModel OwnedReference OwnedBase {remove_mode} \"Socket\"")),
++            XVal::Num(1.0),
++        );
++        assert_eq!(
++            query(&mut app, "HasRuntimeNode OwnedReference \"Socket|owned/duplicate.nif\" 2"),
++            XVal::Num(0.0),
++        );
++        app.update();
++        // First regression boundary: a successful form removal must not leave an
++        // instance leaked through the unrelated per-reference side queue.
++        assert_eq!(meshes(&mut app).len(), 0, "AttachFormModel leaked physical geometry");
++        assert!(members(&mut app).is_empty());
++    }
++    assert!(app.world().get_entity(root).is_ok());
++    assert_eq!(app.world().get::<ChildOf>(socket).unwrap().parent(), root);
++    app.world_mut().entity_mut(root).despawn();
++    app.update();
++    let (replacement, _) = host(app.world_mut(), REFERENCE, "Socket");
++    app.update();
++    assert!(meshes(&mut app).is_empty(), "form intent must not replay into a new model");
++    assert!(members(&mut app).is_empty());
++    attach(&mut app, "OwnedReference", 3, "Socket", "duplicate.nif");
++    app.update();
++    assert_eq!(meshes(&mut app).len(), 2);
++    attach(&mut app, "OwnedReference", 2, "Socket", "duplicate.nif");
++    app.update();
++    assert!(members(&mut app).is_empty());
++    assert!(app.world().get_entity(replacement).is_ok());
++}
++
++#[allow(clippy::too_many_arguments)]
++fn produce_after_queued_foreign_despawn(
++    In(foreign): In<Entity>,
++    game: ResMut<TestGame>,
++    state: ResMut<State>,
++    mut commands: Commands,
++    models: Option<ModelCtx>,
++    rigs: Rigs,
++    visuals: Visuals,
++    nodes: NodeQuery,
++    parents: Query<&ChildOf>,
++    layers: Query<&RenderLayers>,
++    owned: Owned,
++) {
++    // The child still exists while the real producer reads Children. Its despawn
++    // runs before the producer's queued foreign-child detach at the same barrier.
++    commands.entity(foreign).despawn();
++    produce(game, state, commands, models, rigs, visuals, nodes, parents, layers, owned);
++}
++
++#[test]
++fn cleanup_tolerates_a_foreign_child_despawned_before_its_detach_applies() {
++    let (mut app, _files, root, socket) = fixture(false);
++    attach(&mut app, "OwnedReference", 3, "Socket", "duplicate.nif");
++    app.update();
++    let drawn = meshes(&mut app);
++    assert_eq!(drawn.len(), 2);
++    let retired_members = members(&mut app);
++    let doomed = app.world_mut().spawn((Transform::default(), ChildOf(drawn[0]))).id();
++    let survivor = app.world_mut().spawn((Transform::default(), ChildOf(drawn[0]))).id();
++    assert_eq!(app.world().get::<ChildOf>(doomed).unwrap().parent(), drawn[0]);
++    assert_eq!(app.world().get::<ChildOf>(survivor).unwrap().parent(), drawn[0]);
++    attach(&mut app, "OwnedReference", 2, "Socket", "duplicate.nif");
++    app.world_mut()
++        .run_system_once_with(produce_after_queued_foreign_despawn, doomed)
++        .unwrap();
++    assert!(app.world().get_entity(doomed).is_err());
++    assert!(app.world().get_entity(survivor).is_ok());
++    assert!(app.world().get::<ChildOf>(survivor).is_none());
++    assert!(retired_members.iter().all(|e| app.world().get_entity(*e).is_err()));
++    assert_eq!(app.world().get::<ChildOf>(socket).unwrap().parent(), root);
++    app.update();
++    assert!(members(&mut app).is_empty());
++    assert!(app.world().get_entity(survivor).is_ok());
++    assert!(app.world().get_entity(root).is_ok());
++}
