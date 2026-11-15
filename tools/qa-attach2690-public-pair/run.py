@@ -261,7 +261,7 @@ def execute(plan, here, output):
             require(listed['exitCode']==0, 'discovery/setup failed')
             all_names = re.findall(r'^(.+): test$', (folder/'list.stdout').read_text(), re.M)
             require(len(all_names)==len(set(all_names)), 'duplicate test discovery')
-            owned = [n for n in all_names if n.startswith('nif_attachments::tests::')]
+            owned = [n for n in all_names if n.startswith('nif_mirror::attachment_tests::')]
             require(set(owned)==set(plan['candidateNames']) and len(owned)==23, 'wrong owned23 discovery')
             selected = plan['baselineNames'] if side=='baseline' else plan['candidateNames']
             phase = {'side':side,'commit':commit,'executableSHA256':digest,'discovered':len(all_names),'cases':[]}
