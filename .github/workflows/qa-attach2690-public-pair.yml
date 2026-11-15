@@ -1,0 +1,48 @@
+# PROPOSAL ONLY: exact signed candidate/controller pinned; ROOT/original review
+# and independent mechanism peer still required. Not installed or dispatched.
+name: Fork QA Attach2690 public same-fixture pair
+on:
+  push:
+    branches: [qa/attach2690-public-pair-20261115]
+permissions:
+  contents: read
+concurrency:
+  group: qa-attach2690-public-pair-20261115
+  cancel-in-progress: false
+env:
+  CARGO_TERM_COLOR: never
+  CARGO_PROFILE_RELEASE_DEBUG: "0"
+  CARGO_BUILD_JOBS: "2"
+jobs:
+  pair:
+    if: github.repository == 'jojokengly/NVForever' && github.ref == 'refs/heads/qa/attach2690-public-pair-20261115'
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7, captured API commit
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # upstream stable action
+        with:
+          toolchain: stable
+      - name: Free unused hosted SDK space (existing fork QA recipe)
+        run: sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /usr/local/.ghcup /opt/hostedtoolcache/CodeQL
+      - name: Existing upstream engine system packages
+        run: sudo apt-get update && sudo apt-get install -y libasound2-dev libudev-dev libwayland-dev libxkbcommon-dev
+      - name: Reviewed public705 / signed corrective same-fixture pair
+        run: python3 tools/qa-attach2690-public-pair/run.py --execute-plan-sha256 b90ef766244388d77cd8ea35a2b97ea7bbefda94165abda8213d9ba0db70f836 --output "$RUNNER_TEMP/attach2690-proof"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7, captured API commit
+        if: always()
+        with:
+          name: attach2690-public-source-and-raw-pair
+          path: |
+            ${{ runner.temp }}/attach2690-proof/RESULT.json
+            ${{ runner.temp }}/attach2690-proof/HOST.json
+            ${{ runner.temp }}/attach2690-proof/SOURCE-TREES.json
+            ${{ runner.temp }}/attach2690-proof/rustc.*
+            ${{ runner.temp }}/attach2690-proof/cargo.*
+            ${{ runner.temp }}/attach2690-proof/baseline
+            ${{ runner.temp }}/attach2690-proof/candidate
+          if-no-files-found: error
+          retention-days: 30
